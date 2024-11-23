@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build",
+    "build": "npx spago bundle-module && tsc && vite build",
     "preview": "vite preview",
-    "tauri": "tauri"
+    "tauri": "npx spago bundle-module && tauri"
   },
   "dependencies": {
     "@tauri-apps/api": "^2",
