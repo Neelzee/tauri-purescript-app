@@ -5,4 +5,4 @@ module Tauri
 
 import Promise (Promise)
 
-foreign import greet :: Promise String
+foreign import greet :: String -> Promise String
