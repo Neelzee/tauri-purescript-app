@@ -16,39 +16,35 @@ import Web.DOM.ParentNode (QuerySelector(..), querySelector)
 import Web.Event.Event (Event, EventType(..), preventDefault)
 import Web.Event.EventTarget (addEventListener, eventListener)
 import Web.HTML (window)
-import Web.HTML.HTMLDocument (fromParentNode, toEventTarget, toParentNode)
+import Web.HTML.HTMLDocument (toEventTarget, toParentNode)
 import Web.HTML.Window (document)
 import Web.HTML.HTMLInputElement as I
-import Effect.Class.Console (log)
 
 main :: Effect Unit
 main = do
   w <- window
   doc <- document w
-  let eventType = EventType "submit"
-  let parent = toParentNode doc
-  node' <- querySelector (QuerySelector "#greet-form") parent
-  edon <- (querySelector(QuerySelector "#greet-input") parent)
-  case (Tuple node' (Tuple (fromParentNode parent) (getInputElement edon))) of
-    (Tuple (Just n') (Tuple (Just parentNode) (Just inptNode))) -> do
-      let node = toNode n'
-      let eventTarget = toEventTarget parentNode
-      eventListener_ <- eventListener (greetEffect inptNode node)
-      addEventListener eventType eventListener_ false eventTarget
+  let documentParent = toParentNode doc
+  greetFormElementM <- querySelector (QuerySelector "#greet-form") documentParent
+  greetInputElementM <- querySelector(QuerySelector "#greet-input") documentParent
+  case (Tuple greetFormElementM (getInputElement greetInputElementM)) of
+    Tuple (Just greetFormElement) (Just inputElement) -> do
+      let greetFormNode = toNode greetFormElement
+      let eventTarget = toEventTarget doc
+      greetEvent <- eventListener (greetEffect greetFormNode)
+      addEventListener (EventType "submit") greetEvent false eventTarget
       where
-        greetEffect :: I.HTMLInputElement -> Node -> Event -> Effect Unit
-        greetEffect iNode n evt = do
+        greetEffect :: Node -> Event -> Effect Unit
+        greetEffect greetFormNode evt = do
           _ <- preventDefault evt
-          name <- I.value iNode
-          _ <- P.then_ (greetEffect' n) (greet name)
+          name <- I.value inputElement
+          _ <- P.then_ (setGreeting greetFormNode) (greet name)
           mempty
-        greetEffect' :: Node -> String -> Effect (P.Promise Unit)
-        greetEffect' n name' = do
-          _ <- log name'
-          _ <- setTextContent name' n
+        setGreeting :: Node -> String -> Effect (P.Promise Unit)
+        setGreeting greetFormNode greeting = do
+          _ <- setTextContent greeting greetFormNode
           pure (P.resolve unit)
     _ -> mempty
-
 
 getInputElement :: Maybe Element -> Maybe I.HTMLInputElement
 getInputElement (Just no) = I.fromElement no
